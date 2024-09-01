@@ -8,20 +8,48 @@
 import SwiftUI
 
 struct ContentView: View {
+    @State private var user: GithubUser?
     var body: some View {
         VStack(spacing:20) {
-            Circle()
-                .foregroundStyle(.secondary)
-                .frame(width: 120, height: 120)
+            AsyncImage(url: URL(string: user?.avatarUrl ?? "")) { image in
+                image
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .clipShape(Circle())
+            } placeholder: {
+                Circle()
+                    .foregroundStyle(.secondary)
+                    
+            }
+            .frame(width: 120, height: 120)
+
             
-            Text("Username")
+            
+            Text(user?.name ?? "User Name")
                 .bold()
                 .font(.title3)
-            Text("This is where the Github bio will go. Let's make it long so it spans two lines")
+            
+            Text(user?.login ?? "User ID")
+                .font(.subheadline)
+            
+            Text(user?.bio ?? "User Bio")
             Spacer()
             
         }
         .padding()
+        .task {
+            do {
+                user = try await getUser()
+            } catch GHErrors.invalidURL {
+                print("invalid URL")
+            } catch GHErrors.invalidData {
+                print("invalid data")
+            } catch GHErrors.invalidResponse {
+                print("invalid response")
+            } catch {
+                print("unexpected error")
+            }
+        }
     }
     
     func getUser() async throws -> GithubUser {
@@ -53,6 +81,7 @@ struct GithubUser: Codable {
     let login: String
     let avatarUrl: String
     let bio: String
+    let name: String
 }
 
 enum GHErrors: Error {
